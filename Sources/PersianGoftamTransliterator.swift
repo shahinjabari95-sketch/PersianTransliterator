@@ -174,9 +174,196 @@ class PersianGoftamTransliterator: GoftamTransliterator {
     }
 
     func generateCandidates(_ input: String) -> [String] {
-        return wordStore.reorder(self._transliterator.transliterate(input.lowercased()),
-                                 usingTable: PersianGoftamTransliterator.transliteratorName)
+    let normalized = input
+        .lowercased()
+        .replacingOccurrences(of: "ā", with: "aa")
+        .replacingOccurrences(of: "ī", with: "i")
+        .replacingOccurrences(of: "ū", with: "u")
+
+    // Common Persian words and colloquial forms.
+    // These are local and require no network connection.
+    let common: [String: [String]] = [
+        "salam": ["سلام"],
+        "salaam": ["سلام"],
+
+        "chetori": ["چطوری"],
+        "chetoori": ["چطوری"],
+        "chetory": ["چطوری"],
+
+        "khubi": ["خوبی"],
+        "khoobi": ["خوبی"],
+        "khuby": ["خوبی"],
+
+        "khob": ["خوب"],
+        "khoob": ["خوب"],
+
+        "merci": ["مرسی"],
+        "mersi": ["مرسی"],
+
+        "mamnoon": ["ممنون"],
+        "mamnon": ["ممنون"],
+
+        "lotfan": ["لطفاً"],
+        "lotfan": ["لطفاً"],
+
+        "eshgh": ["عشق"],
+        "eshk": ["عشق"],
+
+        "doost": ["دوست"],
+        "dust": ["دوست"],
+
+        "zendegi": ["زندگی"],
+        "zendegy": ["زندگی"],
+
+        "khane": ["خانه"],
+        "khoone": ["خونه"],
+        "khune": ["خونه"],
+
+        "bache": ["بچه"],
+        "bachche": ["بچه"],
+
+        "dokhtar": ["دختر"],
+        "dokhtar": ["دختر"],
+
+        "pesar": ["پسر"],
+
+        "emrooz": ["امروز"],
+        "emruz": ["امروز"],
+
+        "farda": ["فردا"],
+
+        "alan": ["الان"],
+        "al'an": ["الان"],
+
+        "che": ["چه"],
+        "chi": ["چی"],
+
+        "koja": ["کجا"],
+        "kojayi": ["کجایی"],
+
+        "chera": ["چرا"],
+
+        "are": ["آره"],
+        "areh": ["آره"],
+
+        "na": ["نه"],
+
+        "bale": ["بله"],
+
+        "khodafez": ["خداحافظ"],
+        "khodahafez": ["خداحافظ"],
+
+        "sobh": ["صبح"],
+        "shab": ["شب"],
+
+        "rooz": ["روز"],
+        "ruz": ["روز"],
+
+        "shoma": ["شما"],
+        "man": ["من"],
+        "to": ["تو"],
+        "ma": ["ما"],
+        "anha": ["آنها"],
+        "oonha": ["اونا"],
+
+        "mikham": ["می‌خوام", "می‌خواهم"],
+        "mikhaam": ["می‌خوام", "می‌خواهم"],
+        "mikhaham": ["می‌خواهم"],
+        "mikhaam": ["می‌خوام", "می‌خواهم"],
+
+        "nemikham": ["نمی‌خوام", "نمی‌خواهم"],
+        "nemikhaam": ["نمی‌خوام", "نمی‌خواهم"],
+        "nemikhaham": ["نمی‌خواهم"],
+
+        "mishe": ["می‌شه", "می‌شود"],
+        "misheh": ["می‌شه", "می‌شود"],
+        "mishavad": ["می‌شود"],
+
+        "mishe": ["می‌شه", "می‌شود"],
+
+        "mikonam": ["می‌کنم"],
+        "mikoni": ["می‌کنی"],
+        "mikone": ["می‌کنه", "می‌کند"],
+        "mikard": ["می‌کرد"],
+
+        "nemikonam": ["نمی‌کنم"],
+        "nemikoni": ["نمی‌کنی"],
+        "nemikone": ["نمی‌کنه", "نمی‌کند"],
+
+        "mitoonam": ["می‌تونم", "می‌توانم"],
+        "mitunam": ["می‌تونم", "می‌توانم"],
+        "mitavanam": ["می‌توانم"],
+
+        "nemitoonam": ["نمی‌تونم", "نمی‌توانم"],
+        "nemitunam": ["نمی‌تونم", "نمی‌توانم"],
+
+        "bayad": ["باید"],
+        "bayeh": ["بایه"],
+
+        "daram": ["دارم"],
+        "dari": ["داری"],
+        "dare": ["داره"],
+        "darim": ["داریم"],
+
+        "nadaram": ["ندارم"],
+        "nadari": ["نداری"],
+        "nadare": ["نداره"],
+
+        "ghalb": ["قلب"],
+        "qalb": ["قلب"],
+
+        "ghaza": ["غذا"],
+        "qaza": ["غذا"],
+
+        "ghalam": ["قلم"],
+        "qalam": ["قلم"],
+
+        "ghanoon": ["قانون"],
+        "qanun": ["قانون"],
+
+        "khosh": ["خوش"],
+        "khoshhal": ["خوشحال"],
+
+        "doostet": ["دوستت"],
+        "dooset": ["دوستت"],
+
+        "ashegh": ["عاشق"],
+        "asheghet": ["عاشقت"],
+
+        "khobam": ["خوبم"],
+        "khoobam": ["خوبم"],
+
+        "khobesh": ["خوبش"],
+        "khoobesh": ["خوبش"]
+    ]
+
+    let generated = self._transliterator.transliterate(normalized)
+
+    // Put high-confidence dictionary/colloquial forms first.
+    var candidates: [String] = []
+    var seen = Set<String>()
+
+    if let preferred = common[normalized] {
+        for word in preferred {
+            if !seen.contains(word) {
+                candidates.append(word)
+                seen.insert(word)
+            }
+        }
     }
+
+    for word in generated {
+        if !seen.contains(word) {
+            candidates.append(word)
+            seen.insert(word)
+        }
+    }
+
+    return wordStore.reorder(
+        candidates,
+        usingTable: PersianGoftamTransliterator.transliteratorName
+    )
+}
 
     func wordSelected(word: String) {
         wordStore.incrementTimesSelected(word,
