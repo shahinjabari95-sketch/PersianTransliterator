@@ -101,7 +101,6 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 8BA912A9245CC85000C9A683 /* Build configuration list for PBXNativeTarget "goftam" */;
 			buildPhases = (
-				8B562AE524744139005AC1BE /* Force Rebuild (Workaround 41254808) */,
 				8BA91297245CC84D00C9A683 /* Sources */,
 				8BA91298245CC84D00C9A683 /* Frameworks */,
 				8BA91299245CC84D00C9A683 /* Resources */,
@@ -185,11 +184,6 @@
 			shellPath = /bin/sh;
 			shellScript = "# only install this way when developing\nif [ \"${CONFIGURATION}\" == \"Debug\" ]; then\n    DEST=\"${HOME}/Library/Input Methods\"\n    echo \"Installing Goftam into ${DEST}\"\n    killall -9 \"${EXECUTABLE_NAME}\"\n    cp -R \"${BUILT_PRODUCTS_DIR}/${FULL_PRODUCT_NAME}\" \"${DEST}\"\nfi\n";
 		};
-		8B562AE524744139005AC1BE /* Force Rebuild (Workaround 41254808) */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
 			inputFileListPaths = (
 			);
 			inputPaths = (
