@@ -293,9 +293,14 @@ class PersianGoftamTransliterator: GoftamTransliterator {
     }
 
     // Finally apply Goftam's existing user-learning/dictionary ranking.
-    return wordStore.reorder(
+    let reordered = wordStore.reorder(
         candidates,
         usingTable: PersianGoftamTransliterator.transliteratorName
+    )
+    
+    return rankPersianCandidates(
+        reordered,
+        input: normalized
     )
 }
 
@@ -383,6 +388,68 @@ private func phoneticVariants(_ input: String) -> [String] {
         candidates,
         usingTable: PersianGoftamTransliterator.transliteratorName
     )
+}
+
+private func rankPersianCandidates(
+    _ candidates: [String],
+    input: String
+) -> [String] {
+
+    let preferred: Set<String> = [
+        "سلام", "خوب", "خوبی", "خانه", "خونه",
+        "دوست", "عشق", "قلب", "غذا", "زندگی",
+        "امروز", "فردا", "الان", "چطوری",
+        "ممنون", "مرسی", "لطفاً",
+        "باید", "من", "تو", "ما", "شما",
+        "آره", "نه", "بله",
+        "می‌خواهم", "می‌خوام",
+        "نمی‌خواهم", "نمی‌خوام",
+        "می‌شود", "می‌شه",
+        "می‌کنم", "می‌کنی", "می‌کنه",
+        "می‌توانم", "می‌تونم"
+    ]
+
+    var scored: [(word: String, score: Int, index: Int)] = []
+
+    for (index, word) in candidates.enumerated() {
+        var score = 0
+
+        // Strong preference for known common Persian words.
+        if preferred.contains(word) {
+            score += 100
+        }
+
+        // Avoid extremely unlikely candidates.
+        if word.contains("ع") {
+            score -= 2
+        }
+
+        // Prefer normal Persian orthography.
+        if word.contains("هٔ") {
+            score -= 1
+        }
+
+        // Prefer shorter candidates when otherwise equivalent.
+        score -= max(0, word.count - input.count)
+
+        scored.append(
+            (
+                word: word,
+                score: score,
+                index: index
+            )
+        )
+    }
+
+    scored.sort {
+        if $0.score != $1.score {
+            return $0.score > $1.score
+        }
+
+        return $0.index < $1.index
+    }
+
+    return scored.map { $0.word }
 }
 
     func wordSelected(word: String) {
