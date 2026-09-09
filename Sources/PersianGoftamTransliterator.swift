@@ -267,7 +267,13 @@ class PersianGoftamTransliterator: GoftamTransliterator {
         "nadare": ["نداره"]
     ]
 
-    let generated = _transliterator.transliterate(normalized)
+    var generated: [String] = []
+
+    for variant in phoneticVariants(normalized) {
+        generated.append(
+            contentsOf: _transliterator.transliterate(variant)
+    )
+    }
 
     var candidates: [String] = []
     var seen = Set<String>()
@@ -314,6 +320,58 @@ private func normalizePinglish(_ input: String) -> String {
 
     return value
 }
+
+private func phoneticVariants(_ input: String) -> [String] {
+    var variants = [input]
+
+    let replacements: [(String, [String])] = [
+        ("aa", ["a", "aa"]),
+        ("ee", ["i", "e"]),
+        ("ii", ["i"]),
+        ("oo", ["u", "o"]),
+        ("uu", ["u"]),
+        ("ou", ["u", "o"]),
+        ("ow", ["u", "o"]),
+
+        ("kh", ["kh", "x"]),
+        ("gh", ["gh", "q"]),
+
+        ("sh", ["sh"]),
+        ("ch", ["ch"]),
+        ("zh", ["zh"])
+    ]
+
+    for (pattern, alternatives) in replacements {
+        var next: [String] = []
+
+        for variant in variants {
+            if variant.contains(pattern) {
+                for replacement in alternatives {
+                    next.append(
+                        variant.replacingOccurrences(
+                            of: pattern,
+                            with: replacement
+                        )
+                    )
+                }
+            }
+        }
+
+        variants.append(contentsOf: next)
+    }
+
+    var result: [String] = []
+    var seen = Set<String>()
+
+    for variant in variants {
+        if !seen.contains(variant) {
+            result.append(variant)
+            seen.insert(variant)
+        }
+    }
+
+    return result
+}  
     for word in generated {
         if !seen.contains(word) {
             candidates.append(word)
