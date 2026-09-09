@@ -11,23 +11,40 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Build Goftam
-        run: make
-
-      - name: Show build files
+      - name: Build
         run: |
-          find build -type f | head -100
+          make
+          
+          echo "=== Build output ==="
+          find build -maxdepth 6 -type f -print
 
-      - name: Package Demo
+      - name: Verify app executable
+        run: |
+          APP="build/Build/Products/Release/goftam.app"
+          
+          test -d "$APP"
+          echo "App found: $APP"
+          
+          echo "=== App contents ==="
+          find "$APP" -maxdepth 3 -type f -print
+          
+          echo "=== Executable ==="
+          ls -lh "$APP/Contents/MacOS/"
+          
+          test -f "$APP/Contents/MacOS/goftam"
+
+      - name: Package
         run: |
           mkdir -p demo
-          cp -R build/Build/Products/Release/goftam.app demo/Goftam-Persian-Demo.app
+          cp -R build/Build/Products/Release/goftam.app \
+            demo/Goftam-Persian-Demo.app
+
           ditto -c -k --sequesterRsrc --keepParent \
             demo/Goftam-Persian-Demo.app \
             demo/Goftam-Persian-Demo.zip
 
-      - name: Upload Demo
-        uses: actions/upload-artifact@v4
+      - name: Upload
+        uses: actions/upload-artifact@v5
         with:
           name: Goftam-Persian-Demo
           path: demo/Goftam-Persian-Demo.zip
