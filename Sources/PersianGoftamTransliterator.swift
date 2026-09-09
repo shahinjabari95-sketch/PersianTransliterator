@@ -418,6 +418,9 @@ private func rankPersianCandidates(
         if preferred.contains(word) {
             score += 100
         }
+        if persianDictionary.contains(word) {
+            score += 50
+        }
 
         // Avoid extremely unlikely candidates.
         if word.contains("ع") {
@@ -451,6 +454,25 @@ private func rankPersianCandidates(
 
     return scored.map { $0.word }
 }
+private lazy var persianDictionary: Set<String> = {
+    guard let url = Bundle.main.url(
+        forResource: "PersianDictionary",
+        withExtension: "txt"
+    ) else {
+        return []
+    }
+
+    guard let contents = try? String(contentsOf: url, encoding: .utf8) else {
+        return []
+    }
+
+    return Set(
+        contents
+            .components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+    )
+}()
 
     func wordSelected(word: String) {
         wordStore.incrementTimesSelected(word,
