@@ -174,28 +174,38 @@ class PersianGoftamTransliterator: GoftamTransliterator {
     }
 
     func generateCandidates(_ input: String) -> [String] {
-    let normalized = input
-        .lowercased()
-        .replacingOccurrences(of: "ā", with: "aa")
-        .replacingOccurrences(of: "ī", with: "i")
-        .replacingOccurrences(of: "ū", with: "u")
+    let normalized = normalizePinglish(input)
 
-    // Common Persian words and colloquial forms.
-    // These are local and require no network connection.
-    let common: [String: [String]] = [
+    // High-confidence Persian transliterations.
+    // These are intentionally limited to common forms;
+    // the normal Goftam engine handles everything else.
+    let shortcuts: [String: [String]] = [
         "salam": ["سلام"],
         "salaam": ["سلام"],
 
         "chetori": ["چطوری"],
         "chetoori": ["چطوری"],
-        "chetory": ["چطوری"],
 
-        "khubi": ["خوبی"],
+        "khobi": ["خوبی"],
         "khoobi": ["خوبی"],
-        "khuby": ["خوبی"],
-
         "khob": ["خوب"],
         "khoob": ["خوب"],
+
+        "doost": ["دوست"],
+        "dust": ["دوست"],
+
+        "eshgh": ["عشق"],
+        "eshq": ["عشق"],
+
+        "ghalb": ["قلب"],
+        "qalb": ["قلب"],
+
+        "ghaza": ["غذا"],
+        "qaza": ["غذا"],
+
+        "khane": ["خانه"],
+        "khune": ["خونه"],
+        "khoone": ["خونه"],
 
         "merci": ["مرسی"],
         "mersi": ["مرسی"],
@@ -204,72 +214,24 @@ class PersianGoftamTransliterator: GoftamTransliterator {
         "mamnon": ["ممنون"],
 
         "lotfan": ["لطفاً"],
-        "lotfan": ["لطفاً"],
-
-        "eshgh": ["عشق"],
-        "eshk": ["عشق"],
-
-        "doost": ["دوست"],
-        "dust": ["دوست"],
-
-        "zendegi": ["زندگی"],
-        "zendegy": ["زندگی"],
-
-        "khane": ["خانه"],
-        "khoone": ["خونه"],
-        "khune": ["خونه"],
-
-        "bache": ["بچه"],
-        "bachche": ["بچه"],
-
-        "dokhtar": ["دختر"],
-        "dokhtar": ["دختر"],
-
-        "pesar": ["پسر"],
 
         "emrooz": ["امروز"],
         "emruz": ["امروز"],
 
         "farda": ["فردا"],
-
         "alan": ["الان"],
-        "al'an": ["الان"],
-
-        "che": ["چه"],
-        "chi": ["چی"],
-
-        "koja": ["کجا"],
-        "kojayi": ["کجایی"],
-
-        "chera": ["چرا"],
 
         "are": ["آره"],
         "areh": ["آره"],
-
-        "na": ["نه"],
 
         "bale": ["بله"],
 
         "khodafez": ["خداحافظ"],
         "khodahafez": ["خداحافظ"],
 
-        "sobh": ["صبح"],
-        "shab": ["شب"],
-
-        "rooz": ["روز"],
-        "ruz": ["روز"],
-
-        "shoma": ["شما"],
-        "man": ["من"],
-        "to": ["تو"],
-        "ma": ["ما"],
-        "anha": ["آنها"],
-        "oonha": ["اونا"],
-
         "mikham": ["می‌خوام", "می‌خواهم"],
         "mikhaam": ["می‌خوام", "می‌خواهم"],
         "mikhaham": ["می‌خواهم"],
-        "mikhaam": ["می‌خوام", "می‌خواهم"],
 
         "nemikham": ["نمی‌خوام", "نمی‌خواهم"],
         "nemikhaam": ["نمی‌خوام", "نمی‌خواهم"],
@@ -277,14 +239,10 @@ class PersianGoftamTransliterator: GoftamTransliterator {
 
         "mishe": ["می‌شه", "می‌شود"],
         "misheh": ["می‌شه", "می‌شود"],
-        "mishavad": ["می‌شود"],
-
-        "mishe": ["می‌شه", "می‌شود"],
 
         "mikonam": ["می‌کنم"],
         "mikoni": ["می‌کنی"],
         "mikone": ["می‌کنه", "می‌کند"],
-        "mikard": ["می‌کرد"],
 
         "nemikonam": ["نمی‌کنم"],
         "nemikoni": ["نمی‌کنی"],
@@ -298,7 +256,6 @@ class PersianGoftamTransliterator: GoftamTransliterator {
         "nemitunam": ["نمی‌تونم", "نمی‌توانم"],
 
         "bayad": ["باید"],
-        "bayeh": ["بایه"],
 
         "daram": ["دارم"],
         "dari": ["داری"],
@@ -307,51 +264,56 @@ class PersianGoftamTransliterator: GoftamTransliterator {
 
         "nadaram": ["ندارم"],
         "nadari": ["نداری"],
-        "nadare": ["نداره"],
-
-        "ghalb": ["قلب"],
-        "qalb": ["قلب"],
-
-        "ghaza": ["غذا"],
-        "qaza": ["غذا"],
-
-        "ghalam": ["قلم"],
-        "qalam": ["قلم"],
-
-        "ghanoon": ["قانون"],
-        "qanun": ["قانون"],
-
-        "khosh": ["خوش"],
-        "khoshhal": ["خوشحال"],
-
-        "doostet": ["دوستت"],
-        "dooset": ["دوستت"],
-
-        "ashegh": ["عاشق"],
-        "asheghet": ["عاشقت"],
-
-        "khobam": ["خوبم"],
-        "khoobam": ["خوبم"],
-
-        "khobesh": ["خوبش"],
-        "khoobesh": ["خوبش"]
+        "nadare": ["نداره"]
     ]
 
-    let generated = self._transliterator.transliterate(normalized)
+    let generated = _transliterator.transliterate(normalized)
 
-    // Put high-confidence dictionary/colloquial forms first.
     var candidates: [String] = []
     var seen = Set<String>()
 
-    if let preferred = common[normalized] {
-        for word in preferred {
-            if !seen.contains(word) {
-                candidates.append(word)
-                seen.insert(word)
-            }
+    // Put high-confidence forms first.
+    if let preferred = shortcuts[normalized] {
+        for word in preferred where !seen.contains(word) {
+            candidates.append(word)
+            seen.insert(word)
         }
     }
 
+    // Then add normal Goftam candidates.
+    for word in generated where !seen.contains(word) {
+        candidates.append(word)
+        seen.insert(word)
+    }
+
+    // Finally apply Goftam's existing user-learning/dictionary ranking.
+    return wordStore.reorder(
+        candidates,
+        usingTable: PersianGoftamTransliterator.transliteratorName
+    )
+}
+
+private func normalizePinglish(_ input: String) -> String {
+    var value = input.lowercased()
+
+    // Normalize common Persian/Pinglish spelling variations.
+    value = value.replacingOccurrences(of: "ā", with: "aa")
+    value = value.replacingOccurrences(of: "á", with: "a")
+    value = value.replacingOccurrences(of: "í", with: "i")
+    value = value.replacingOccurrences(of: "ī", with: "i")
+    value = value.replacingOccurrences(of: "ó", with: "o")
+    value = value.replacingOccurrences(of: "ú", with: "u")
+    value = value.replacingOccurrences(of: "ū", with: "u")
+
+    // x is already supported by Goftam as خ.
+    // q and gh both remain available for ق/غ.
+    // Normalize alternate doubled-vowel spellings.
+    value = value.replacingOccurrences(of: "aaaa", with: "aa")
+    value = value.replacingOccurrences(of: "ooo", with: "oo")
+    value = value.replacingOccurrences(of: "uuu", with: "uu")
+
+    return value
+}
     for word in generated {
         if !seen.contains(word) {
             candidates.append(word)
